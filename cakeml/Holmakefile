@@ -1,0 +1,19 @@
+# tested with: https://github.com/CakeML/cakeml/releases/tag/v1469
+CAKEMLDIR = ../../cakeml
+# tested with: https://github.com/kth-step/HolBA/releases/tag/mil
+HOLBADIR = ../../HolBA
+INCLUDES = $(MILDIR)/misc \
+ $(MILDIR)/semantics \
+ $(MILDIR)/executable \
+ $(HOLBADIR)/src/theory/bir \
+ $(MILDIR)/bir \
+ $(CAKEMLDIR)/misc \
+ $(CAKEMLDIR)/semantics \
+ $(CAKEMLDIR)/semantics/proofs \
+ $(CAKEMLDIR)/basis/pure \
+ $(CAKEMLDIR)/basis \
+ $(CAKEMLDIR)/translator \
+ $(CAKEMLDIR)/characteristic
+
+all: $(DEFAULT_TARGETS)
+.PHONY: all

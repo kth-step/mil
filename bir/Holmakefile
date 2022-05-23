@@ -1,0 +1,12 @@
+# tested with: https://github.com/kth-step/HolBA/releases/tag/mil
+HOLBADIR = ../../HolBA
+INCLUDES = $(MILDIR)/misc \
+ $(MILDIR)/semantics \
+ $(MILDIR)/executable \
+ $(HOLBADIR)/src/theory/bir \
+ $(HOLBADIR)/src/theory/bir-support \
+ $(HOLBADIR)/src/tools/exec \
+ $(HOLBADIR)/src/tools/scamv/obsmodel
+
+all: $(DEFAULT_TARGETS)
+.PHONY: all

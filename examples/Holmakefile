@@ -1,0 +1,4 @@
+INCLUDES = $(MILDIR)/misc $(MILDIR)/semantics $(MILDIR)/executable
+
+all: $(DEFAULT_TARGETS)
+.PHONY: all

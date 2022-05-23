@@ -1,0 +1,4 @@
+INCLUDES = $(MILDIR)/misc
+
+all: $(DEFAULT_TARGETS)
+.PHONY: all
