@@ -8,8 +8,10 @@ val _ = new_theory "milLifeCycleOoO";
 
 Datatype:
  out_of_order_lifecycle =
- | out_of_order_lifecycle_Decoded | out_of_order_lifecycle_Executed
- | out_of_order_lifecycle_Committed | out_of_order_lifecycle_Fetched
+ | out_of_order_lifecycle_Decoded
+ | out_of_order_lifecycle_Executed
+ | out_of_order_lifecycle_Committed
+ | out_of_order_lifecycle_Fetched
 End
 
 val out_of_order_lifecycle_distinct = fetch "-" "out_of_order_lifecycle_distinct";

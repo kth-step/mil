@@ -1,10 +1,10 @@
-open HolKernel boolLib Parse bossLib metisTools wordsLib wordsTheory finite_mapTheory listTheory pred_setTheory sortingTheory milUtilityTheory milTheory milSemanticsUtilityTheory milMetaTheory milMetaIOTheory milTracesTheory milCompositionalTheory milExampleUtilityTheory milStoreTheory milExecutableExamplesTheory milExecutableUtilityTheory milExecutableTransitionTheory milExecutableIOTheory milExecutableIOTraceTheory milExecutableCompositionalTheory;
+open HolKernel boolLib Parse bossLib metisTools wordsLib wordsTheory finite_mapTheory listTheory pred_setTheory sortingTheory milUtilityTheory milTheory milSemanticsUtilityTheory milMetaTheory milMetaIOTheory milTracesTheory milInitializationTheory milCompositionalTheory milExampleUtilityTheory milStoreTheory milExecutableExamplesTheory milExecutableUtilityTheory milExecutableTransitionTheory milExecutableInitializationTheory milExecutableIOTheory milExecutableIOTraceTheory milExecutableCompositionalTheory;
 
 (* ======================= *)
-(* Branch-on-equal program *)
+(* Branch-on-equal example *)
 (* ======================= *)
 
-val _ = new_theory "milBranchEqual";
+val _ = new_theory "milExampleBranchEqual";
 
 (* ------------------- *)
 (* Program definitions *)
@@ -77,7 +77,7 @@ Proof
  rw [example_beq_list_t,example_beq_t,example_beq_list_set]
 QED
 
-Theorem example_beq_list_map:
+Theorem example_beq_list_map[local]:
  !tb0 tb1 tb2 tb3 tb4 tb5 tb6 tb7 tb8 reg adr.
   MAP bound_name_instr (example_beq_list tb0 tb1 tb2 tb3 tb4 tb5 tb6 tb7 tb8 reg adr) =
    [tb0; tb1; tb2; tb3; tb4; tb5; tb6; tb7; tb8]
@@ -374,51 +374,27 @@ QED
 (* Generic initialization *)
 (* ---------------------- *)
 
-(* FIXME: replace with initialize_state when possible *)
-Definition initialize_state_beq:
- initialize_state_beq reg reg0 pc0 =
-  State_st
-   { i_assign 1 (e_val val_true) (o_internal (e_val reg));
-     i_assign 2 (e_val val_true) (o_internal (e_val reg0));
-     i_assign 3 (e_val val_true) (o_store res_REG 1 2);
-     i_assign 4 (e_val val_true) (o_internal (e_val val_zero));
-     i_assign 5 (e_val val_true) (o_internal (e_val pc0));
-     i_assign 6 (e_val val_true) (o_store res_PC 4 5) }
-   (FEMPTY |+ (1,reg) |+ (2,reg0) |+ (3,reg0) |+ (4,val_zero) |+ (5,pc0) |+ (6,pc0))
-   {} {6}
-End
-
-(* FIXME: replace with initialize_state_list when possible *)
-Definition initialize_state_list_beq:
- initialize_state_list_beq reg reg0 pc0 =
-  (State_st_list
-   [ i_assign 1 (e_val val_true) (o_internal (e_val reg));
-     i_assign 2 (e_val val_true) (o_internal (e_val reg0));
-     i_assign 3 (e_val val_true) (o_store res_REG 1 2);
-     i_assign 4 (e_val val_true) (o_internal (e_val val_zero));
-     i_assign 5 (e_val val_true) (o_internal (e_val pc0));
-     i_assign 6 (e_val val_true) (o_store res_PC 4 5) ]
-   (FEMPTY |+ (1,reg) |+ (2,reg0) |+ (3,reg0) |+ (4,val_zero) |+ (5,pc0) |+ (6,pc0))
-   [] [6], 6:num)
-End
-
-Theorem initialize_state_beq_state_list_to_state:
- !reg reg0 pc0.
-  state_list_to_state (FST (initialize_state_list_beq reg reg0 pc0)) = 
-  initialize_state_beq reg reg0 pc0
+(* FIXME: not needed with general well_formed_ok proof *)
+Theorem initialize_state_list_reg_expand[local]:
+ !reg adr reg0 pc0. 
+  initialize_state_list [] [(reg,reg0)] pc0 =
+    (State_st_list
+     [
+      i_assign 1 (e_val val_true) (o_internal (e_val reg));
+      i_assign 2 (e_val val_true) (o_internal (e_val reg0));
+      i_assign 3 (e_val val_true) (o_store res_REG 1 2);
+      i_assign 4 (e_val val_true) (o_internal (e_val val_zero));
+      i_assign 5 (e_val val_true) (o_internal (e_val pc0));
+      i_assign 6 (e_val val_true) (o_store res_PC 4 5)
+     ]
+     (FEMPTY |+ (1,reg) |+ (2,reg0) |+ (3,reg0) |+ (4,val_zero) |+ (5,pc0) |+ (6,pc0))
+     [] [6], 6)
 Proof
- rw [initialize_state_list_beq,initialize_state_beq,state_list_to_state]
-QED
-
-Theorem initialize_state_list_beq_NO_DUPLICATES:
- !reg reg0 pc0.
-  NO_DUPLICATES (state_program_list (FST (initialize_state_list_beq reg reg0 pc0)))
-Proof
- rw [state_program_list,initialize_state_list_beq,NO_DUPLICATES,ALL_DISTINCT,bound_name_instr]
+ rw [] >> EVAL_TAC
 QED
 
 (* FIXME: should not be needed *)
-Theorem initialize_state_beq_FLOOKUP_expand:
+Theorem initialize_state_list_reg_FLOOKUP_expand[local]:
  !reg reg0 pc0.
   FLOOKUP (FEMPTY |+ (1:num,reg) |+ (2,reg0) |+ (3,reg0) |+ (4,val_zero) |+ (5,pc0) |+ (6,pc0)) 1 = SOME reg /\
   FLOOKUP (FEMPTY |+ (1:num,reg) |+ (2,reg0) |+ (3,reg0) |+ (4,val_zero) |+ (5,pc0) |+ (6,pc0)) 2 = SOME reg0 /\  
@@ -430,77 +406,100 @@ Proof
  rw [] >> EVAL_TAC >> rw []
 QED
 
-Theorem addr_of_initialize_state_beq:
+(* FIXME: should not be needed *)
+Theorem initialize_state_list_reg_NO_DUPLICATES[local]:
  !reg reg0 pc0.
-  addr_of (state_program (initialize_state_beq reg reg0 pc0)) 6 =
-  SOME (res_PC,4)
+  NO_DUPLICATES
+  [i_assign 1 (e_val val_true) (o_internal (e_val reg));
+   i_assign 2 (e_val val_true) (o_internal (e_val reg0));
+   i_assign 3 (e_val val_true) (o_store res_REG 1 2);
+   i_assign 4 (e_val val_true) (o_internal (e_val val_zero));
+   i_assign 5 (e_val val_true) (o_internal (e_val pc0));
+   i_assign 6 (e_val val_true) (o_store res_PC 4 5)]
 Proof
- rw [] >>
- MP_TAC (Q.SPECL [`reg`,`reg0`,`pc0`] initialize_state_list_beq_NO_DUPLICATES) >>
- rw [GSYM initialize_state_beq_state_list_to_state,GSYM state_program_list_correct] >>
- rw [GSYM addr_of_list_correct] >>
- rw [addr_of_list,state_program_list,initialize_state_list_beq,FIND_instr,bound_name_instr]
+ rw [NO_DUPLICATES,ALL_DISTINCT,bound_name_instr]
 QED
 
-(* FIXME: derive from general lemma *)
-Theorem initialize_state_beq_well_formed_state:
- !reg reg0 pc0. well_formed_state (initialize_state_beq reg reg0 pc0)
+(* FIXME: should not be needed *)
+Theorem initialize_state_list_reg_state_list_to_set[local]:
+ !reg adr reg0 pc0.
+ { i_assign 1 (e_val val_true) (o_internal (e_val reg));
+   i_assign 2 (e_val val_true) (o_internal (e_val reg0));
+   i_assign 3 (e_val val_true) (o_store res_REG 1 2);
+   i_assign 4 (e_val val_true) (o_internal (e_val val_zero));
+   i_assign 5 (e_val val_true) (o_internal (e_val pc0));
+   i_assign 6 (e_val val_true) (o_store res_PC 4 5) } =
+ set [ i_assign 1 (e_val val_true) (o_internal (e_val reg));
+    i_assign 2 (e_val val_true) (o_internal (e_val reg0));
+    i_assign 3 (e_val val_true) (o_store res_REG 1 2);
+    i_assign 4 (e_val val_true) (o_internal (e_val val_zero));
+    i_assign 5 (e_val val_true) (o_internal (e_val pc0));
+    i_assign 6 (e_val val_true) (o_store res_PC 4 5)
+  ]
 Proof
- rw [initialize_state_beq,well_formed_state,bound_names_program] >>
- fs [bound_name_instr,free_names_instr,names_e,names_o,map_down,sem_instr] >>
- rw [sem_expr_correct,val_true,val_false] >>
- fs [initialize_state_beq_FLOOKUP_expand] >>
- TRY(METIS_TAC[bound_name_instr]) >>
- rw [str_may,SUBSET_DEF] >> fs [bound_name_instr,val_true] >>
- MP_TAC (Q.SPECL [`reg`,`reg0`,`pc0`] addr_of_initialize_state_beq) >>
- rw [state_program,initialize_state_beq,val_true] >>
- strip_tac >>
- rw [] >> fs []
+ rw []
 QED
 
 (* FIXME: not needed with general well_formed_ok proof *)
-Theorem initialize_state_list_beq_well_formed_ok:
- !reg reg0 pc0 stl tmax.   
-  initialize_state_list_beq reg reg0 pc0 = (stl,tmax) ==>
+Theorem initialize_state_list_reg_well_formed_ok[local]:
+ !reg adr reg0 pc0 stl tmax.   
+  initialize_state_list [] [(reg,reg0)] pc0 = (stl,tmax) ==>
   State_st_list_well_formed_ok stl /\ max_name_in_state_list stl <= tmax
 Proof
- strip_tac >> strip_tac >> strip_tac >> strip_tac >> strip_tac >>
- MP_TAC (Q.SPECL [`reg`,`reg0`,`pc0`] initialize_state_list_beq_NO_DUPLICATES) >>
- MP_TAC (Q.SPECL [`reg`,`reg0`,`pc0`] initialize_state_beq_well_formed_state) >>
- MP_TAC (Q.SPECL [`reg`,`reg0`,`pc0`] initialize_state_beq_state_list_to_state) >>
- rw [
-  initialize_state_list_beq,
-  initialize_state_beq,
-  state_program_list,
-  max_name_in_state_list
- ] >-
- (once_rewrite_tac [State_st_list_well_formed_ok] >> rw []) >>
- EVAL_TAC
-QED
-
-Theorem initialize_state_list_beq_tmax_6:
- !reg reg0 pc0 stl tmax.
-  initialize_state_list_beq reg reg0 pc0 = (stl,tmax) ==>
-  tmax = 6
-Proof
- EVAL_TAC >> rw []
-QED
-
-Theorem initialize_state_list_beq_length_6:
- !reg reg0 pc0 stl tmax.
-  initialize_state_list_beq reg reg0 pc0 = (stl,tmax) ==>
-  LENGTH (state_program_list stl) = 6
-Proof
- EVAL_TAC >> rw [] >> rw [state_program_list]
+ rw [initialize_state_list_reg_expand] >-
+  (rw [State_st_list_well_formed_ok] >-
+   rw [NO_DUPLICATES,bound_name_instr] >>
+   rw [well_formed_state,state_list_to_state,bound_names_program] >>
+   fs [bound_name_instr,free_names_instr,names_e,names_o,map_down,sem_instr] >>
+   rw [sem_expr_correct,val_true,val_false] >>
+   fs [initialize_state_list_reg_FLOOKUP_expand] >>
+   TRY(METIS_TAC[bound_name_instr]) >>
+   MP_TAC (Q.SPECL [`reg`,`reg0`,`pc0`] initialize_state_list_reg_NO_DUPLICATES) >>
+   rw [str_may,SUBSET_DEF] >> fs [bound_name_instr,val_true] >>
+   `addr_of_list [ 
+     i_assign 1 (e_val 1w) (o_internal (e_val reg));
+     i_assign 2 (e_val 1w) (o_internal (e_val reg0));
+     i_assign 3 (e_val 1w) (o_store res_REG 1 2);
+     i_assign 4 (e_val 1w) (o_internal (e_val val_zero));
+     i_assign 5 (e_val 1w) (o_internal (e_val pc0));
+     i_assign 6 (e_val 1w) (o_store res_PC 4 5)
+    ] 6 = SOME (res_REG,ta)`
+    by METIS_TAC [val_true,initialize_state_list_reg_state_list_to_set,addr_of_list_correct] >| [
+     fs [addr_of_list,FIND_instr,bound_name_instr],
+     fs [initialize_state_list_reg_FLOOKUP_expand],
+     fs [addr_of_list,FIND_instr,bound_name_instr],
+     fs [addr_of_list,FIND_instr,bound_name_instr],
+     fs [initialize_state_list_reg_FLOOKUP_expand],
+     fs [addr_of_list,FIND_instr,bound_name_instr]
+   ]) >>
+ rw [max_name_in_state_list,max_bound_name_list,bound_name_instr]
 QED
 
 (* FIXME: derivable from more general lemmas *)
-Theorem initialize_state_list_beq_SORTED:
- !reg reg0 pc0 stl tmax.
-  initialize_state_list_beq reg reg0 pc0 = (stl,tmax) ==>
+Theorem initialize_state_list_reg_tmax_6[local]:
+ !reg adr reg0 pc0 stl tmax.
+  initialize_state_list [] [(reg,reg0)] pc0 = (stl,tmax) ==>
+  tmax = 6
+Proof
+ rw [initialize_state_list_reg_expand]
+QED
+
+(* FIXME: derivable from more general lemmas *)
+Theorem initialize_state_list_reg_length_6[local]:
+ !reg adr reg0 pc0 stl tmax.
+  initialize_state_list [] [(reg,reg0)] pc0 = (stl,tmax) ==> 
+  LENGTH (state_program_list stl) = 6
+Proof
+ rw [initialize_state_list_reg_expand] >> rw [state_program_list]
+QED
+
+(* FIXME: derivable from more general lemmas *)
+Theorem initialize_state_list_reg_SORTED[local]:
+ !reg adr reg0 pc0 stl tmax.
+  initialize_state_list [] [(reg,reg0)] pc0 = (stl,tmax) ==>
   SORTED bound_name_instr_le (state_program_list stl)
 Proof
- EVAL_TAC >> rw [] >>
+ rw [initialize_state_list_reg_expand] >>
  rw [state_program_list,bound_name_instr_le,name_le,bound_name_instr]
 QED
 
@@ -510,27 +509,32 @@ QED
 
 Definition initialize_example_beq:
  initialize_example_beq reg adr reg0 pc0 =
-  let st = initialize_state_beq reg reg0 pc0 in
+  let st = initialize_state {} {(reg,reg0)} pc0 in
   union_program_state st (example_beq_t (max_name_in_State st) reg adr)
 End
 
 Definition initialize_example_beq_list:
  initialize_example_beq_list reg adr reg0 pc0 =
-  let (stl,tmax) = initialize_state_list_beq reg reg0 pc0 in
+  let (stl,tmax) = initialize_state_list [] [(reg,reg0)] pc0 in
   append_program_state_list stl (example_beq_list_t tmax reg adr)
 End
 
 (* FIXME: prove using general theorems *)
-Theorem initialize_example_beq_list_eq:
+Theorem initialize_example_beq_list_eq[local]:
  !reg adr reg0 pc0.
   state_list_to_state (initialize_example_beq_list reg adr reg0 pc0) =
   initialize_example_beq reg adr reg0 pc0
 Proof
- rw [initialize_example_beq_list,initialize_example_beq] >>
+ rw [initialize_example_beq,initialize_example_beq_list] >>
  rw [example_beq_list_t_set] >>
- rw [GSYM initialize_state_beq_state_list_to_state] >>
- rw [GSYM append_program_state_list_correct] >>
+ `FINITE {}` by rw [] >>
+ `FINITE {(reg,reg0)}` by rw [] >>
+ `SET_TO_LIST {(reg,reg0)} = [(reg,reg0)]` by rw [SET_TO_LIST_SING] >>
+ `SET_TO_LIST {} = []` by rw [] >>
+ `initialize_state {} {(reg,reg0)} pc0 = state_list_to_state (FST (initialize_state_list [] [(reg,reg0)] pc0))`
+  by rw [GSYM initialize_state_list_eq] >>
  rw [max_name_in_state_list_correct] >>
+ rw [GSYM append_program_state_list_correct] >>
  EVAL_TAC
 QED
 
@@ -539,43 +543,43 @@ Theorem initialize_example_beq_list_well_formed_ok:
   State_st_list_well_formed_ok (initialize_example_beq_list reg adr reg0 pc0)
 Proof
  rw [initialize_example_beq_list] >>
- Cases_on `initialize_state_list_beq reg reg0 pc0` >>
+ Cases_on `initialize_state_list [] [(reg,reg0)] pc0` >>
  rename1 `(stl,tmax)` >>
  `State_st_list_well_formed_ok stl /\ max_name_in_state_list stl <= tmax`
-  by METIS_TAC [initialize_state_list_beq_well_formed_ok] >>
+  by METIS_TAC [initialize_state_list_reg_well_formed_ok] >>
  rw [] >>
- METIS_TAC [example_beq_list_t_compositional_well_formed_ok]
+ METIS_TAC [example_beq_list_t_compositional_well_formed_ok] 
 QED
 
-Theorem initialize_example_beq_list_not_Completed_list:
+Theorem initialize_example_beq_list_not_Completed_list[local]:
  !reg adr reg0 pc0.
   ~(Completed_list sem_expr
     (initialize_example_beq_list reg adr reg0 pc0)
     (i_assign 7 (e_val val_true) (o_internal (e_val val_zero))))
 Proof
  rw [initialize_example_beq_list] >>
- Cases_on `initialize_state_list_beq reg reg0 pc0` >>
+ Cases_on `initialize_state_list [] [(reg,reg0)] pc0` >>
  rename1 `(stl,tmax)` >> 
  rw [] >>
  `7:num = 6 + 1` by DECIDE_TAC >>
  `tmax = 6` suffices_by METIS_TAC [
-    initialize_state_list_beq_well_formed_ok,
+    initialize_state_list_reg_well_formed_ok,
     example_beq_list_t_not_Completed_list_HD
    ] >>
- METIS_TAC [initialize_state_list_beq_tmax_6]
+ METIS_TAC [initialize_state_list_reg_tmax_6]
 QED
 
-Theorem initialize_example_beq_list_NTH:
+Theorem initialize_example_beq_list_NTH[local]:
  !reg adr reg0 pc0.
   NTH (PRE 7) (state_program_list (initialize_example_beq_list reg adr reg0 pc0)) =
   SOME (i_assign 7 (e_val val_true) (o_internal (e_val val_zero)))
 Proof
  rw [initialize_example_beq_list] >>
- Cases_on `initialize_state_list_beq reg reg0 pc0` >>
+ Cases_on `initialize_state_list [] [(reg,reg0)] pc0` >>
  rename1 `(stl,tmax)` >> 
  rw [] >>
  `LENGTH (state_program_list stl) = 6`
-  by METIS_TAC [initialize_state_list_beq_length_6] >>
+  by METIS_TAC [initialize_state_list_reg_length_6] >>
  Cases_on `stl` >>
  rename1 `State_st_list il0 s0 cl0 fl0` >>
  fs [state_program_list,append_program_state_list] >>
@@ -584,20 +588,20 @@ Proof
  `6 = PRE (SUC (LENGTH il0)) /\ tmax = 6`
   suffices_by METIS_TAC [example_beq_list_t_NTH] >>
  rw [] >>
- METIS_TAC [initialize_state_list_beq_tmax_6]
+ METIS_TAC [initialize_state_list_reg_tmax_6]
 QED
 
-Theorem initialize_example_beq_list_SORTED:
+Theorem initialize_example_beq_list_SORTED[local]:
  !reg adr reg0 pc0.
   SORTED bound_name_instr_le (state_program_list (initialize_example_beq_list reg adr reg0 pc0))
 Proof
  rw [initialize_example_beq_list] >>
- Cases_on `initialize_state_list_beq reg reg0 pc0` >>
+ Cases_on `initialize_state_list [] [(reg,reg0)] pc0` >>
  rename1 `(stl,tmax)` >> 
  rw [] >>
  `SORTED bound_name_instr_le (state_program_list stl)`
-  by METIS_TAC [initialize_state_list_beq_SORTED] >>
- `max_name_in_state_list stl <= tmax` by METIS_TAC [initialize_state_list_beq_well_formed_ok] >>
+  by METIS_TAC [initialize_state_list_reg_SORTED] >>
+ `max_name_in_state_list stl <= tmax` by METIS_TAC [initialize_state_list_reg_well_formed_ok] >>
  `compositional_program (set (example_beq_list_t tmax reg adr)) (max_name_in_state_list stl)`
   by METIS_TAC [example_beq_t_compositional_program,example_beq_list_t_set] >>
  METIS_TAC [compositional_program_append_program_state_list_SORTED,example_beq_list_t_SORTED]
@@ -608,12 +612,12 @@ Theorem example_beq_list_Completed_up_to:
 Proof
  rw [
   initialize_example_beq_list,
-  initialize_state_list_beq,
+  initialize_state_list_reg_expand,
   append_program_state_list,
   Completed_list_up_to
  ] >>
  fs [Completed_list] >>
- rw [initialize_state_beq_FLOOKUP_expand]
+ rw [initialize_state_list_reg_FLOOKUP_expand]
 QED
 
 (* --------------------------------------- *)
@@ -628,7 +632,9 @@ Theorem initialize_example_beq_list_reg_not_1_IO_bounded_trace:
 Proof
  rw [val_one,val_four] >>
  POP_ASSUM (fn thm =>
-   CONV_TAC (computeLib.RESTR_EVAL_CONV []
+   CONV_TAC (computeLib.RESTR_EVAL_CONV
+     [``IO_bounded_trace translate_val_list sem_expr_exe
+      (initialize_example_beq_list reg adr reg0 pc0) 7 (SUC 8)``]
     THENC (REWRITE_CONV [thm]) THENC EVAL))
 QED
 

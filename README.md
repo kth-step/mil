@@ -123,11 +123,11 @@ This can take around 15 minutes on a modern machine.
 
 The directory `bir` contains an (unverified) SML function that translates a BIR program to a MIL program, and some examples of using this function.
 
-To build the translator, [HolBA](https://github.com/kth-step/HolBA) with the tag `mil` must be present in a sibling directory named `HolBA`:
+To build the translator, [HolBA](https://github.com/kth-step/HolBA) with the tag `FMCAD2022_artifact` must be present in a sibling directory named `HolBA`:
 ```shell
 git clone https://github.com/kth-step/HolBA.git
 cd HolBA
-git checkout mil
+git checkout FMCAD2022_artifact
 ```
 
 With the `HolBA` directory available as a sibling, the translator can be built by running:
@@ -166,8 +166,12 @@ cp path/to/MIL/cakeml/mil_reg_translate.cml .
 make mil_reg_translate.cake
 ./mil_reg_translate.cake
 ```
+
 On a modern machine, compilation can take a few minutes, but running the program should take
-only a few milliseconds to output a MIL trace.
+only a few milliseconds to output the following MIL trace:
+```
+[il 0wx0, il 0wx4, il 0wx0, il 0wx4, il 0wx0, il 0wx4, il 0wx0, il 0wx4, il 0wx0, il 0wx4, il 0wx0, il 0wx4, il 0wx0, il 0wx4, il 0wx0, il 0wx4, il 0wx0, il 0wx4, il 0wx0, il 0wx4, il 0wx0, il 0wx4, il 0wx0, il 0wx4]
+```
 
 In comparison, the HOL4 `EVAL_TAC` call that proves the equivalent theorem
 `ex_bir_prog_IO_bounded_trace_long` in `bir/bir_to_mil_test_basicScript.sml`

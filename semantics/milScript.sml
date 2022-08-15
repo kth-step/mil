@@ -5,7 +5,6 @@ local open arithmeticTheory stringTheory containerTheory pred_setTheory listTheo
 
 val _ = new_theory "mil";
 
-
 open wordsTheory;
 
 val _ = type_abbrev("k", ``:num``); (* index variable (subscript) *)
@@ -65,28 +64,10 @@ obs =  (* observation *)
  | obs_il of v (* load from instructions *)
 `;
 val _ = Hol_datatype ` 
-act_ext =  (* extended action *)
-   act_ext_prd (* predict *)
- | act_ext_exe (* execute *)
- | act_ext_pexe (* execute predicted *)
- | act_ext_cmt of v => v (* commit *)
- | act_ext_ftc of I (* fetch *)
- | act_ext_ret (* retire *)
- | act_ext_rbk (* rollback *)
-`;
-val _ = Hol_datatype ` 
 act =  (* action *)
    act_exe (* execute *)
  | act_cmt of v => v (* commit *)
  | act_ftc of I (* fetch *)
-`;
-val _ = Hol_datatype ` 
-State_ext =  (* extended state *)
-   State_ext_st of I => s => N => N => d => N
-`;
-val _ = Hol_datatype ` 
-m =  (* extended label *)
-   m_lb of obs => act_ext => t
 `;
 val _ = Hol_datatype ` 
 State =  (* state *)
@@ -132,21 +113,6 @@ Definition instr_in_State:
  instr_in_State (i:i) ((State_st I s C f):State) = (i IN I)
 End
 
-(* FIXME: dummy definition *)
-Definition deps_t_State:
-  deps_t_State (t:t) (S:State) : N = {}
-End
-
-(* FIXME: dummy definition *)
-Definition state_equiv_t:
- state_equiv_t (S:State) (t:t) (S':State) = T
-End
-
-(* FIXME: dummy definition *)
-Definition Delta_plus:
- Delta_plus (d:d) (t:t) : N = {}
-End
-
 Definition bound_name_instr:
  bound_name_instr ((i_assign t e opm):i) = t
 End
@@ -156,10 +122,9 @@ Definition bound_names_program:
   { t | ?i. i IN I /\ t = bound_name_instr i }
 End
 
-(* FIXME: to be validated *)
 Definition program_difference_names:
- program_difference_names (I:I) (N:N) : I =
-  { i | i IN I /\ ~((bound_name_instr i) IN N) }
+ program_difference_names (I0:I) (N0:N) : I =
+  { i | i IN I0 /\ bound_name_instr i NOTIN N0 }
 End
 
 Definition names_e:

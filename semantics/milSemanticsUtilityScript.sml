@@ -1136,9 +1136,9 @@ Proof
 QED
 
 Theorem fupdate_in_str_may:
- !I s C Fs t v c mop n c' mop' i.
+ !I s C Fs C' Fs' t v n.
   t NOTIN FDOM s ==>
-  str_may (State_st I (s |+ (t,v)) C Fs) n SUBSET str_may (State_st I s C Fs) n
+  str_may (State_st I (s |+ (t,v)) C' Fs') n SUBSET str_may (State_st I s C Fs) n
 Proof
  fs [SUBSET_DEF] >> rw [] >>
  Cases_on `x` >>
@@ -1356,6 +1356,416 @@ Theorem store_pc_in_str_may_completed_then_fetched:
   t' IN F0
 Proof
  rw [] >> fs [Completed,str_may] >> fs []
+QED
+
+(* Lemma 10, part 5 *)
+Theorem str_act_unaffected_C_F:
+ !I s C Fs C' Fs' t.
+  str_act (State_st I s C Fs) t = str_act (State_st I s C' Fs') t
+Proof
+ rw [str_act,EXTENSION] >> EQ_TAC >> rw [] >> METIS_TAC [str_may]
+QED
+
+Theorem fupdate_in_str_act:
+ !I' s' C Fs C' Fs'.
+  (!i i'. i IN I' ==> i' IN I' ==> bound_name_instr i = bound_name_instr i' ==> i = i') ==>
+  !i t t' v.
+   t NOTIN FDOM s' ==>
+   i IN str_act (State_st I' (s' |+ (t,v)) C' Fs') t' ==>
+   i IN str_act (State_st I' s' C Fs) t'
+Proof
+ rw [] >>
+ `i IN str_act (State_st I' (s' |+ (t,v)) C Fs) t'`
+  by METIS_TAC [str_act_unaffected_C_F] >>
+ PAT_X_ASSUM ``i IN str_act (State_st I' (s' |+ (t,v)) C' Fs') t'`` (fn thm => ALL_TAC) >>
+ `?i'. i' IN I' /\ bound_name_instr i' = t'`
+  by (`?r ta. addr_of I' t' = SOME (r,ta)` by fs [str_act,str_may] >>
+   METIS_TAC [addr_of_some_exist_load_or_store,bound_name_instr]) >>
+ rw [] >>
+ rename1 `x IN str_act (State_st I' (s' |+ (t,v)) C Fs) (bound_name_instr i')` >>
+ rename1 `i IN I'` >>
+ `x IN str_may (State_st I' (s' |+ (t,v)) C Fs) (bound_name_instr i)` by
+  fs [str_act] >>
+ `?t1 c1 r t11 t12. x = i_assign t1 c1 (o_store r t11 t12)`
+  by METIS_TAC [in_str_may_store] >> rw [] >>
+
+ sg `(?c ta. i = i_assign (bound_name_instr i) c (o_load r ta)) \/
+  (?c ta tv. i = i_assign (bound_name_instr i) c (o_store r ta tv))` >-
+  (`(?c ta. i_assign (bound_name_instr i) c (o_load r ta) IN I') \/
+     (?c ta tv. i_assign (bound_name_instr i) c (o_store r ta tv) IN I')`
+    suffices_by METIS_TAC [bound_name_instr] >>
+   METIS_TAC [in_str_may_load_or_store]) >-
+  (Cases_on `i` >> rw [] >> fs [bound_name_instr] >> rw [] >>
+
+   `i_assign t1 c1 (o_store r t11 t12) IN str_may (State_st I' s' C Fs) n`
+    by METIS_TAC [fupdate_in_str_may,SUBSET_DEF,bound_name_instr] >>
+   Cases_on `i_assign t1 c1 (o_store r t11 t12) IN str_act (State_st I' s' C Fs) n` >>
+   rw [] >>
+   `addr_of I' n = SOME (r,ta)`
+    by METIS_TAC [addr_of_contains_unique_load] >>
+
+   sg `?t2 c2 t21 t22. i_assign t2 c2 (o_store r t21 t22) IN str_may (State_st I' s' C Fs) n /\
+    t2 > t1 /\ (?v. sem_expr c2 s' = SOME v /\ v <> val_false) /\
+    ((?v. FLOOKUP s' t21 = SOME v /\ FLOOKUP s' ta = SOME v) \/
+     (?v. FLOOKUP s' t21 = SOME v /\ FLOOKUP s' t11 = SOME v))` >-
+     (fs [str_act] >> METIS_TAC []) >-
+     (`sem_expr c2 (s' |+ (t,v)) = SOME v'` by METIS_TAC [sem_expr_notin_fdom_some_fupdate] >>
+      `t21 IN FDOM s'` by fs [FLOOKUP_DEF] >>
+      `t21 <> t` by METIS_TAC [] >>
+      `FLOOKUP (s' |+ (t,v)) t21 = SOME v''` by fs [FLOOKUP_DEF,NOT_EQ_FAPPLY] >>
+      `ta IN FDOM s'` by fs [FLOOKUP_DEF] >>
+      `ta <> t` by METIS_TAC [] >>
+      `FLOOKUP (s' |+ (t,v)) ta = SOME v''` by fs [FLOOKUP_DEF,NOT_EQ_FAPPLY] >>
+      Cases_on `i_assign t2 c2 (o_store r t21 t22) IN str_may (State_st I' (s' |+ (t,v)) C Fs) n` >-
+       (fs [str_act] >- METIS_TAC [] >>
+        PAT_ASSUM ``!i''. P`` (fn thm => ASSUME_TAC (SPEC ``i_assign t2 c2 (o_store r t21 t22)`` thm)) >>
+        fs [] >> rw [] >> METIS_TAC []) >>
+      `?v'''. FLOOKUP (s' |+ (t,v)) ta = SOME v''' /\ v''' <> v''` suffices_by rw [] >>
+      fs [str_may] >> METIS_TAC []) >>
+
+   `sem_expr c2 (s' |+ (t,v)) = SOME v'` by METIS_TAC [sem_expr_notin_fdom_some_fupdate] >>
+   `t21 IN FDOM s'` by fs [FLOOKUP_DEF] >>
+   `t21 <> t` by METIS_TAC [] >>
+   `FLOOKUP (s' |+ (t,v)) t21 = SOME v''` by fs [FLOOKUP_DEF,NOT_EQ_FAPPLY] >>
+   `t11 IN FDOM s'` by fs [FLOOKUP_DEF] >>
+   `t11 <> t` by METIS_TAC [] >>
+   `FLOOKUP (s' |+ (t,v)) t11 = SOME v''` by fs [FLOOKUP_DEF,NOT_EQ_FAPPLY] >>
+   Cases_on `i_assign t2 c2 (o_store r t21 t22) IN str_may (State_st I' (s' |+ (t,v)) C Fs) n` >-
+    (fs [str_act] >- METIS_TAC [] >>
+     PAT_ASSUM ``!i''. P`` (fn thm => ASSUME_TAC (SPEC ``i_assign t2 c2 (o_store r t21 t22)`` thm)) >>
+     fs [] >> rw [] >> METIS_TAC []) >>
+   fs [str_may] >> METIS_TAC []) >>
+
+ Cases_on `i` >> rw [] >> fs [bound_name_instr] >> rw [] >>
+ sg `i_assign t1 c1 (o_store r t11 t12) IN str_may (State_st I' s' C Fs) n` >-
+ METIS_TAC [fupdate_in_str_may,SUBSET_DEF,bound_name_instr] >>
+ Cases_on `i_assign t1 c1 (o_store r t11 t12) IN str_act (State_st I' s' C Fs) n` >>
+ rw [] >>
+ `addr_of I' n = SOME (r,ta)` by METIS_TAC [addr_of_contains_unique_store] >>
+ sg `?t2 c2 t21 t22. i_assign t2 c2 (o_store r t21 t22) IN str_may (State_st I' s' C Fs) n /\
+  t2 > t1 /\ (?v. sem_expr c2 s' = SOME v /\ v <> val_false) /\
+  ((?v. FLOOKUP s' t21 = SOME v /\ FLOOKUP s' ta = SOME v) \/
+   (?v. FLOOKUP s' t21 = SOME v /\ FLOOKUP s' t11 = SOME v))` >-
+   (fs [str_act] >> METIS_TAC []) >-
+   (`sem_expr c2 (s' |+ (t,v)) = SOME v'` by METIS_TAC [sem_expr_notin_fdom_some_fupdate] >>
+    `t21 IN FDOM s'` by fs [FLOOKUP_DEF] >>
+    `t21 <> t` by METIS_TAC [] >>
+    `FLOOKUP (s' |+ (t,v)) t21 = SOME v''` by fs [FLOOKUP_DEF,NOT_EQ_FAPPLY] >>
+    `ta IN FDOM s'` by fs [FLOOKUP_DEF] >>
+    `ta <> t` by METIS_TAC [] >>
+    `FLOOKUP (s' |+ (t,v)) ta = SOME v''` by fs [FLOOKUP_DEF,NOT_EQ_FAPPLY] >>
+
+    Cases_on `i_assign t2 c2 (o_store r t21 t22) IN str_may (State_st I' (s' |+ (t,v)) C Fs) n` >-
+     (fs [str_act] >- METIS_TAC [] >>
+      PAT_ASSUM ``!i''. P`` (fn thm => ASSUME_TAC (SPEC ``i_assign t2 c2 (o_store r t21 t22)`` thm)) >>
+      fs [] >> rw [] >> METIS_TAC []) >>
+    `?v'''. FLOOKUP s' ta = SOME v''' /\ v''' <> v''` suffices_by rw [] >>
+    fs [str_may] >> METIS_TAC []) >>
+
+ `sem_expr c2 (s' |+ (t,v)) = SOME v'` by METIS_TAC [sem_expr_notin_fdom_some_fupdate] >>
+ `t21 IN FDOM s'` by fs [FLOOKUP_DEF] >>
+ `t21 <> t` by METIS_TAC [] >>
+ `FLOOKUP (s' |+ (t,v)) t21 = SOME v''` by fs [FLOOKUP_DEF,NOT_EQ_FAPPLY] >>
+ `t11 IN FDOM s'` by fs [FLOOKUP_DEF] >>
+ `t11 <> t` by METIS_TAC [] >>
+ `FLOOKUP (s' |+ (t,v)) t11 = SOME v''` by fs [FLOOKUP_DEF,NOT_EQ_FAPPLY] >>
+ Cases_on `i_assign t2 c2 (o_store r t21 t22) IN str_may (State_st I' (s' |+ (t,v)) C Fs) n` >-
+  (fs [str_act] >- METIS_TAC [] >>
+   PAT_ASSUM ``!i''. P`` (fn thm => ASSUME_TAC (SPEC ``i_assign t2 c2 (o_store r t21 t22)`` thm)) >>
+   fs [] >> rw [] >> METIS_TAC []) >>
+ fs [str_may] >> METIS_TAC []
+QED
+
+Theorem fupdate_subset_str_act:
+ !I s C Fs.
+  (!i i'. i IN I ==> i' IN I ==> bound_name_instr i = bound_name_instr i' ==> i = i') ==>
+  !t t' v. t NOTIN FDOM s ==>
+  str_act (State_st I (s |+ (t,v)) C Fs) t' SUBSET str_act (State_st I s C Fs) t'
+Proof
+ rw [SUBSET_DEF] >> METIS_TAC [fupdate_in_str_act]
+QED
+
+(* Lemma 10, part 2 *)
+Theorem str_may_union_I_eq:
+ !I s C Fs I' C' Fs' t.
+  t IN bound_names_program I ==>
+  (!t'. t' IN bound_names_program I' ==> t < t') ==>
+  str_may (State_st I s C Fs) t = str_may (State_st (I UNION I') s C' Fs') t
+Proof
+ rw [] >> fs [str_may] >> rw [EXTENSION] >> fs [] >>
+ EQ_TAC >- METIS_TAC [addr_of_union_I_eq] >>
+ sg `t NOTIN bound_names_program I''` >-
+  (`t IN bound_names_program I'' ==> F` suffices_by METIS_TAC [] >> STRIP_TAC >>
+   `t < t` by METIS_TAC [] >> fs []) >>
+ rw [] >> fs [] >> TRY(METIS_TAC [instr_in_bound_names_program,addr_of_union_I_eq]) >>
+ `t' IN bound_names_program I''` by METIS_TAC [instr_in_bound_names_program] >>
+ `t < t'` by METIS_TAC [] >> fs []
+QED
+
+(* Lemma 10, part 3 *)
+Theorem str_may_funion_s_eq:
+ !I s C Fs s' t. t IN bound_names_program I ==>
+  (!i. i IN I ==> !t'. t' IN free_names_instr i ==> t' < bound_name_instr i) ==>
+  (!t'. t' IN FDOM s' ==> t' >= t) ==>
+  str_may (State_st I s C Fs) t = str_may (State_st I (FUNION s s') C Fs) t
+Proof
+ rw [] >> fs [str_may] >> rw [EXTENSION] >> fs [] >> EQ_TAC >-
+  (rw [] >> fs [] >| [
+    `sem_expr c' (FUNION s s') = SOME v` by rw [sem_expr_funion] >>
+    rw [FLOOKUP_FUNION],
+
+    `sem_expr c' (FUNION s s') = SOME v` by rw [sem_expr_funion] >>
+    METIS_TAC [store_in_flookup_eq],
+
+    `sem_expr c' (FUNION s s') = SOME v` by rw [sem_expr_funion] >>
+    rw [store_in_flookup_eq] >>
+    `FLOOKUP s ta = FLOOKUP (FUNION s s') ta` suffices_by METIS_TAC [] >>
+    `(?c. i_assign t c (o_load r ta) IN I') \/
+      (?c tv. i_assign t c (o_store r ta tv) IN I')`
+     by METIS_TAC [addr_of_some_exist_load_or_store] >-
+    METIS_TAC [load_t_in_flookup_eq] >>
+    METIS_TAC [store_t_in_flookup_eq],
+
+    rw [FLOOKUP_FUNION] >> METIS_TAC [store_in_sem_expr_eq],
+
+    rw [] >- METIS_TAC [store_in_sem_expr_eq] >> METIS_TAC [store_in_flookup_eq],
+
+    rw [] >- METIS_TAC [store_in_sem_expr_eq] >>
+    `FLOOKUP s ta = FLOOKUP (FUNION s s') ta` suffices_by METIS_TAC [] >>
+    `(?c. i_assign t c (o_load r ta) IN I') \/
+      (?c tv. i_assign t c (o_store r ta tv) IN I')`
+     by METIS_TAC [addr_of_some_exist_load_or_store] >-
+    METIS_TAC [load_t_in_flookup_eq] >>
+    METIS_TAC [store_t_in_flookup_eq]
+   ]) >>
+ rw [] >> fs [] >| [
+  rw [] >- METIS_TAC [store_in_sem_expr_eq] >>
+  `FLOOKUP s ta' = SOME v'` by METIS_TAC [store_in_flookup_eq] >>
+  `FLOOKUP s ta = SOME v'` suffices_by METIS_TAC [] >>
+  `(?c. i_assign t c (o_load r ta) IN I') \/
+      (?c tv. i_assign t c (o_store r ta tv) IN I')`
+   by METIS_TAC [addr_of_some_exist_load_or_store] >-
+  METIS_TAC [load_t_in_flookup_eq] >>
+  METIS_TAC [store_t_in_flookup_eq],
+
+  rw [] >- METIS_TAC [store_in_sem_expr_eq] >>
+  fs [FLOOKUP_FUNION] >>
+  Cases_on `FLOOKUP s ta'` >> fs [] >> Cases_on `FLOOKUP s ta` >> fs [],
+
+  rw [] >- METIS_TAC [store_in_sem_expr_eq] >>
+  fs [FLOOKUP_FUNION] >> Cases_on `FLOOKUP s ta` >> fs [],
+
+  rw [] >- METIS_TAC [store_in_sem_expr_eq] >>
+  `FLOOKUP s ta' = SOME v` by METIS_TAC [store_in_flookup_eq] >>
+  `FLOOKUP s ta = SOME v` suffices_by METIS_TAC [] >>
+  `(?c. i_assign t c (o_load r ta) IN I') \/
+      (?c tv. i_assign t c (o_store r ta tv) IN I')`
+   by METIS_TAC [addr_of_some_exist_load_or_store] >-
+  METIS_TAC [load_t_in_flookup_eq] >>
+  METIS_TAC [store_t_in_flookup_eq],
+
+  rw [] >- METIS_TAC [store_in_sem_expr_eq] >>
+  METIS_TAC [store_in_flookup_eq],
+
+  rw [] >- METIS_TAC [store_in_sem_expr_eq] >>
+  `FLOOKUP s ta = NONE` suffices_by METIS_TAC [] >>
+  `(?c. i_assign t c (o_load r ta) IN I') \/
+      (?c tv. i_assign t c (o_store r ta tv) IN I')`
+   by METIS_TAC [addr_of_some_exist_load_or_store] >-
+  METIS_TAC [load_t_in_flookup_eq] >>
+  METIS_TAC [store_t_in_flookup_eq]
+ ]
+QED
+
+(* Lemma 10, part 4 *)
+Theorem str_may_union_eq:
+ !I s C Fs I' s' C' Fs' t.
+ t IN bound_names_program I ==>
+ (!t'. t' IN bound_names_program I' ==> t < t') ==>
+ (!i. i IN I ==> !t'. t' IN free_names_instr i ==> t' < bound_name_instr i) ==>
+ (!t'. t' IN FDOM s' ==> t' >= t) ==>
+ str_may (State_st I s C Fs) t = str_may (State_st (I UNION I') (FUNION s s') C' Fs') t
+Proof
+ rw [] >>
+ `str_may (State_st I' s C Fs) t = str_may (State_st I' s C' Fs') t`
+  by rw [str_may_unaffected_C_F] >>
+ `str_may (State_st I' s C' Fs') t =
+   str_may (State_st I' (FUNION s s') C' Fs') t`
+  by rw [str_may_funion_s_eq] >>
+ `str_may (State_st I' (FUNION s s') C' Fs') t =
+   str_may (State_st (I' UNION I'') (FUNION s s') C' Fs') t`
+ by rw [str_may_union_I_eq] >>
+ METIS_TAC []
+QED
+
+(* Lemma 10, part 6 *)
+Theorem str_act_union_I_eq:
+ !I s C Fs I' C' Fs' t.
+  t IN bound_names_program I ==>
+  (!t'. t' IN bound_names_program I' ==> t < t') ==>
+  str_act (State_st I s C Fs) t = str_act (State_st (I UNION I') s C' Fs') t
+Proof
+ rw [] >> fs [str_act] >> rw [EXTENSION] >>
+ fs [] >> EQ_TAC >> rw [] >| [
+  METIS_TAC [str_may_union_I_eq],
+  METIS_TAC [addr_of_union_I_eq,str_may_union_I_eq],
+  METIS_TAC [str_may_union_I_eq],
+  METIS_TAC [addr_of_union_I_eq,str_may_union_I_eq]
+ ]
+QED
+
+(* Lemma 10, part 7 *)
+Theorem str_act_funion_s_eq:
+ !I s C Fs s' t.
+  t IN bound_names_program I ==>
+  (!i. i IN I ==> !t'. t' IN free_names_instr i ==> t' < bound_name_instr i) ==>
+  (!t'. t' IN FDOM s' ==> t' >= t) ==>
+  str_act (State_st I s C Fs) t = str_act (State_st I (FUNION s s') C Fs) t
+Proof
+ rw [] >> fs [str_act] >> rw [EXTENSION] >> fs [] >> EQ_TAC >> rw [] >| [
+  METIS_TAC [str_may_funion_s_eq],
+
+  rw [] >>
+  Cases_on `i'' IN str_may (State_st I' (FUNION s s') C Fs) t` >> rw [] >>
+  `i_assign t'' c'' (o_store r ta'' tv'') IN I'` by fs [str_may] >>
+  Cases_on `t'' > t'` >> rw [] >>
+  `i_assign t' c' (o_store r ta' tv') IN I'` by fs [str_may] >>
+  `i_assign t'' c'' (o_store r ta'' tv'') IN str_may (State_st I' s C Fs) t`
+   by METIS_TAC [str_may_funion_s_eq] >>
+  `t' < t''` by DECIDE_TAC >>
+  `t'' < t` by fs [str_may] >>
+  `(!v. sem_expr c'' s <> SOME v \/ v = val_false) \/
+   (!v. FLOOKUP s ta'' <> SOME v \/ FLOOKUP s ta <> SOME v) /\
+    !v. FLOOKUP s ta'' <> SOME v \/ FLOOKUP s ta' <> SOME v`
+   by METIS_TAC [] >- METIS_TAC [store_in_sem_expr_eq] >>
+  `t' < t` by fs [str_may] >>
+  `FLOOKUP (FUNION s s') ta'' = FLOOKUP s ta''`
+   by METIS_TAC [store_in_flookup_eq] >>
+  `FLOOKUP (FUNION s s') ta' = FLOOKUP s ta'`
+   by METIS_TAC [store_in_flookup_eq] >>
+  `FLOOKUP (FUNION s s') ta = FLOOKUP s ta`
+   suffices_by METIS_TAC [] >>
+  `(?c. i_assign t c (o_load r ta) IN I') \/
+     (?c tv. i_assign t c (o_store r ta tv) IN I')`
+   by METIS_TAC [addr_of_some_exist_load_or_store] >-
+  METIS_TAC [load_t_in_flookup_eq] >>
+  METIS_TAC [store_t_in_flookup_eq],
+
+  METIS_TAC [str_may_funion_s_eq],
+
+  rw [] >>
+  `i_assign t' c' (o_store r ta' tv') IN I'` by fs [str_may] >>
+  `i_assign t' c' (o_store r ta' tv') IN str_may (State_st I' s C Fs) t`
+   by METIS_TAC [str_may_funion_s_eq] >>
+  `t' < t` by fs [str_may] >>
+  Cases_on `i'' IN str_may (State_st I' s C Fs) t` >> rw [] >>
+  `i_assign t'' c'' (o_store r ta'' tv'') IN I'` by fs [str_may] >>
+  `t'' < t` by fs [str_may] >>
+  Cases_on `t'' > t'` >> rw [] >>
+  `i_assign t'' c'' (o_store r ta'' tv'') IN str_may (State_st I' (FUNION s s') C Fs) t`
+   by METIS_TAC [str_may_funion_s_eq] >>
+  `(!v. sem_expr c'' (FUNION s s') <> SOME v \/ v = val_false) \/
+   (!v. FLOOKUP (FUNION s s') ta'' <> SOME v \/
+     FLOOKUP (FUNION s s') ta <> SOME v) /\
+   !v. FLOOKUP (FUNION s s') ta'' <> SOME v \/
+    FLOOKUP (FUNION s s') ta' <> SOME v`
+   by METIS_TAC [] >- METIS_TAC [store_in_sem_expr_eq] >>
+  `FLOOKUP (FUNION s s') ta'' = FLOOKUP s ta''`
+   by METIS_TAC [store_in_flookup_eq] >>
+  `FLOOKUP (FUNION s s') ta' = FLOOKUP s ta'`
+   by METIS_TAC [store_in_flookup_eq] >>
+  `FLOOKUP (FUNION s s') ta = FLOOKUP s ta`
+   suffices_by METIS_TAC [] >>
+  `(?c. i_assign t c (o_load r ta) IN I') \/
+     (?c tv. i_assign t c (o_store r ta tv) IN I')`
+   by METIS_TAC [addr_of_some_exist_load_or_store] >-
+  METIS_TAC [load_t_in_flookup_eq] >>
+  METIS_TAC [store_t_in_flookup_eq]
+]
+QED
+
+(* Lemma 10, part 8 *)
+Theorem str_act_union_eq:
+ !I s C Fs I' s' C' Fs' t.
+  t IN bound_names_program I ==>
+  (!t'. t' IN bound_names_program I' ==> t < t') ==>
+  (!i. i IN I ==> !t'. t' IN free_names_instr i ==> t' < bound_name_instr i) ==>
+  (!t'. t' IN FDOM s' ==> t' >= t) ==>
+  str_act (State_st I s C Fs) t =
+   str_act (State_st (I UNION I') (FUNION s s') C' Fs') t
+Proof
+ rw [] >>
+ `str_act (State_st I' s C Fs) t = str_act (State_st I' s C' Fs') t`
+  by rw [str_act_unaffected_C_F] >>
+ `str_act (State_st I' s C' Fs') t = str_act (State_st I' (FUNION s s') C' Fs') t`
+  by rw [str_act_funion_s_eq] >>
+ `str_act (State_st I' (FUNION s s') C' Fs') t =
+   str_act (State_st (I' UNION I'') (FUNION s s') C' Fs') t`
+  by rw [str_act_union_I_eq] >>
+ METIS_TAC []
+QED
+
+(* Lemma 10 *)
+Theorem str_may_act_union_eq:
+ !I s C Fs I' s' C' Fs' t.
+  t IN bound_names_program I ==>
+  (!t'. t' IN bound_names_program I' ==> t < t') ==>
+  (!i. i IN I ==> !t'. t' IN free_names_instr i ==> t' < bound_name_instr i) ==>
+  (!t'. t' IN FDOM s' ==> t' >= t) ==>
+  str_may (State_st I s C Fs) t =
+   str_may (State_st (I UNION I') (FUNION s s') C' Fs') t  /\
+  str_act (State_st I s C Fs) t =
+   str_act (State_st (I UNION I') (FUNION s s') C' Fs') t
+Proof
+ METIS_TAC [
+  str_may_union_eq,
+  str_act_union_eq
+ ]
+QED
+
+Theorem union_translate_val_subset_str_may:
+ !I' s C C' Fs Fs'. FINITE I' ==>
+  !t t' v. t IN bound_names_program I' ==>
+  str_may (State_st (I' UNION translate_val v (MAX_SET (bound_names_program I'))) s C' Fs') t
+  SUBSET str_may (State_st I' s C Fs) t
+Proof
+ rw [] >>
+ `str_may (State_st (I' UNION translate_val v (MAX_SET (bound_names_program I'))) s C' Fs') t =
+   str_may (State_st I' s C Fs) t`
+   suffices_by METIS_TAC [SUBSET_REFL] >>
+ `str_may (State_st I' s C Fs) t =
+   str_may (State_st (I' UNION translate_val v (MAX_SET (bound_names_program I'))) s C' Fs') t`
+  suffices_by METIS_TAC [str_may_unaffected_C_F] >>
+ `!t'. t' IN bound_names_program (translate_val v (MAX_SET (bound_names_program I'))) ==> t < t'`
+   suffices_by METIS_TAC [str_may_union_I_eq] >>
+ rw [] >>
+ `?c' mop. i_assign t c' mop IN I'`
+  by METIS_TAC [bound_names_program_in_instr] >>
+ `?c'' mop'. i_assign t' c'' mop' IN translate_val v (MAX_SET (bound_names_program I'))`
+  by METIS_TAC [bound_names_program_in_instr] >>
+ METIS_TAC [translate_val_max_name_lt_i_assign]
+QED
+
+Theorem union_translate_val_subset_str_act:
+ !I' s C C' Fs Fs'. FINITE I' ==>
+  !t t' v. t IN bound_names_program I' ==>
+  str_act (State_st (I' UNION translate_val v (MAX_SET (bound_names_program I'))) s C' Fs') t
+  SUBSET str_act (State_st I' s C Fs) t
+Proof
+ rw [] >>
+ `str_act (State_st (I' UNION translate_val v (MAX_SET (bound_names_program I'))) s C' Fs') t =
+   str_act (State_st I' s C Fs) t`
+  suffices_by METIS_TAC [SUBSET_DEF,SUBSET_REFL] >>
+ `str_act (State_st I' s C Fs) t =
+   str_act (State_st (I' UNION translate_val v (MAX_SET (bound_names_program I'))) s C' Fs') t`
+  suffices_by METIS_TAC [str_act_unaffected_C_F] >>
+ `!t'. t' IN bound_names_program (translate_val v (MAX_SET (bound_names_program I'))) ==> t < t'`
+  suffices_by METIS_TAC [str_act_union_I_eq] >> rw [] >>
+ `?c' mop. i_assign t c' mop IN I'`
+  by METIS_TAC [bound_names_program_in_instr] >>
+ `?c'' mop'. i_assign t' c'' mop' IN translate_val v (MAX_SET (bound_names_program I'))`
+  by METIS_TAC [bound_names_program_in_instr] >>
+ METIS_TAC [translate_val_max_name_lt_i_assign]
 QED
 
 (* --------- *)

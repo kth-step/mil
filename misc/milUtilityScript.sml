@@ -390,6 +390,23 @@ Proof
  METIS_TAC [NOT_FDOM_FAPPLY_FEMPTY]
 QED
 
+Theorem FLOOKUP_FEMPTY_FUNION_EQ:
+ !f t v. t NOTIN FDOM f ==>
+  f |+ (t,v) = FUNION (FEMPTY |+ (t,v)) f
+Proof
+ rw [] >>
+ `FDOM (f |+ (t,v)) = t INSERT (FDOM f)` by rw [FDOM_FUPDATE] >>
+ sg `FDOM (FUNION (FEMPTY |+ (t,v)) f) = t INSERT (FDOM f)` >-
+  (fs [FDOM_FUNION] >>
+   rw [UNION_DEF] >> once_rewrite_tac [INSERT_DEF] >>
+   rw [EXTENSION] >> METIS_TAC []) >>
+ `!t'. t IN FDOM (f |+ (t,v)) ==> (f |+ (t,v)) ' t' = (FUNION (FEMPTY |+ (t,v)) f) ' t'`
+  suffices_by fs [fmap_EXT] >>
+ rw [] >> Cases_on `t = t'` >- rw [FUNION_DEF] >>
+ rw [FUNION_DEF,NOT_EQ_FAPPLY] >>
+ METIS_TAC [NOT_FDOM_FAPPLY_FEMPTY]
+QED
+
 Theorem fupdate_fupdate_neq_reorder:
  !s k1 k2 v1 v2.
   k1 NOTIN FDOM s ==>

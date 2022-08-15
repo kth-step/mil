@@ -1,10 +1,10 @@
 open HolKernel boolLib Parse bossLib metisTools wordsLib wordsTheory finite_mapTheory listTheory pred_setTheory sortingTheory milUtilityTheory milTheory milSemanticsUtilityTheory milMetaTheory milMetaIOTheory milTracesTheory milInitializationTheory milCompositionalTheory milExampleUtilityTheory milStoreTheory milExecutableExamplesTheory milExecutableUtilityTheory milExecutableTransitionTheory milExecutableInitializationTheory milExecutableIOTheory milExecutableIOTraceTheory milExecutableCompositionalTheory;
 
 (* ===================== *)
-(* Copy-on-equal program *)
+(* Copy-on-equal example *)
 (* ===================== *)
 
-val _ = new_theory "milCopyEqual";
+val _ = new_theory "milExampleCopyEqual";
 
 (* ------------------- *)
 (* Program definitions *)

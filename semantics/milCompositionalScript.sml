@@ -203,8 +203,7 @@ Proof
    `!t'. t' IN bound_names_program I1 ==> t < t'`
     by (rw [bound_names_program] >>
      METIS_TAC [compositional_program_state_lt_bound_name_instr,bound_name_instr]) >>
-   rw [GSYM str_may_union_I_eq] >>
-   METIS_TAC [wfs_C_str_may],
+   METIS_TAC [wfs_C_str_may, GSYM str_may_union_I_eq],
 
    `?t1 t2 c. i_assign t c (o_store res_PC t1 t2) IN I0`
     by METIS_TAC [wfs_F_exists_store_pc] >>
@@ -220,8 +219,7 @@ Proof
    `!t'. t' IN bound_names_program I1 ==> t < t'`
     by (rw [bound_names_program] >>
      METIS_TAC [compositional_program_state_lt_bound_name_instr,bound_name_instr]) >>
-   rw [GSYM str_may_union_I_eq] >>
-   METIS_TAC [wfs_F_str_may]
+   METIS_TAC [wfs_F_str_may,GSYM str_may_union_I_eq]
  ]
 QED
 

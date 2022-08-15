@@ -1,6 +1,6 @@
 # tested with: https://github.com/CakeML/cakeml/releases/tag/v1469
 CAKEMLDIR = ../../cakeml
-# tested with: https://github.com/kth-step/HolBA/releases/tag/mil
+# tested with: https://github.com/kth-step/HolBA/releases/tag/FMCAD2022_artifact
 HOLBADIR = ../../HolBA
 INCLUDES = $(MILDIR)/misc \
  $(MILDIR)/semantics \
