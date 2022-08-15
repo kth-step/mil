@@ -1,7 +1,6 @@
 # MIL
 
-A machine independent language for defining the semantics of microarchitectural
-features such as out-of-order and speculative execution.
+A formalization of a machine independent language for defining the semantics of microarchitectural features such as out-of-order execution.
 
 ## Building
 
@@ -35,6 +34,7 @@ This can take up to a few minutes on a modern machine.
   - [`milReorderScript.sml`](semantics/milReorderScript.sml): definitions and theorems about reordering of MIL traces, including a theorem on memory consistency for the OoO and IO semantics
   - [`milCompositionalScript.sml`](semantics/milCompositionalScript.sml): definitions and theorems on basic composition of MIL programs
   - [`milNoninterferenceScript.sml`](semantics/milNoninterferenceScript.sml): definitions and theorems related to conditional noninterference
+  - [`milLifeCycleOoOScript.sml`](semantics/milLifeCycleOoOScript.sml): instruction lifecycle state machine results for OoO semantics
   - [`milExampleBisimulationScript.sml`](semantics/milExampleBisimulationScript.sml): definitions and theorems related to bisimulations for MIL programs
 
 - `executable`: executable functions related to MIL and their theory
@@ -49,9 +49,7 @@ This can take up to a few minutes on a modern machine.
   - [`milExecutableExamplesScript.sml`](executable/milExecutableExamplesScript.sml): definitions and results useful when executing MIL programs
   - [`milMaxExeTraceUtilityScript.sml`](executable/milMaxExeTraceUtilityScript.sml): definitions and results related to maximal terminating executions of MIL programs
   - [`milExecutableHelperScript.sml`](executable/milExecutableHelperScript.sml): examples of using execution generation on MIL programs
-  - [`milExecutableCompositionalScript.sml`](Executable/milCompositionalScript.sml): definitions and theorems on basic composition of executable MIL programs
-  - [`milBranchEqualScript.sml`](executable/milBranchEqualScript.sml): program that does branch on equal, and analysis of its traces by execution
-  - [`milCopyEqualScript.sml`](executable/milBranchEqualScript.sml): program that does copy on equal, and analysis of its traces by execution
+  - [`milExecutableCompositionalScript.sml`](executable/milExecutableCompositionalScript.sml): definitions and theorems on basic composition of executable MIL programs
 
 - `examples`: MIL program examples and related results
 
@@ -64,6 +62,8 @@ This can take up to a few minutes on a modern machine.
   - [`milExampleSpectreOOOScript.sml`](examples/milExampleSpectreOOOScript.sml): example MIL program describing a Spectre-style out-of-order vulnerability
   - [`milMaxExeTraceExampleSpectreOOOScript.sml`](examples/milMaxExeTraceExampleSpectreOOOScript.sml): theorems for analysing the information leakage relation of ExampleSpectreOOO by using the executable IO functions.
   - [`milExampleLoopScript.sml`](examples/milExampleLoopScript.sml): example MIL program implementing a high-level loop
+  - [`milExampleBranchEqualScript.sml`](examples/milExampleBranchEqualScript.sml): program that does branch on equal, and analysis of its traces by execution
+  - [`milExampleCopyEqualScript.sml`](examples/milExampleCopyEqualScript.sml): program that does copy on equal, and analysis of its traces by execution
 
 - `bir`: translation from BIR to MIL with examples
 
@@ -83,7 +83,7 @@ This can take up to a few minutes on a modern machine.
   - [`milCakeScript.sml`](cakeml/milCakeScript.sml): CakeML friendly definitions of MIL executable functions
   - [`milCakeProofScript.sml`](cakeml/milCakeProofScript.sml): proofs that CakeML friendly functions refine the original MIL executable functions
   - [`milProgScript.sml`](cakeml/milProgScript.sml): proof-producing translation of CakeML friendly definitions to CakeML
-  - [`mil_to_MilprintLib.sml`)(cakeml/mil_to_MilprintLib.sml): direct pretty-printing of MIL abstract syntax to CakeML concrete syntax, for when the CakeML translator is too slow
+  - [`mil_to_MilprintLib.sml`](cakeml/mil_to_MilprintLib.sml): direct pretty-printing of MIL abstract syntax to CakeML concrete syntax, for when the CakeML translator is too slow
 
 ## Key definitions and results
 
@@ -98,8 +98,6 @@ This can take up to a few minutes on a modern machine.
 - `executable`
   - `milExecutableIOScript.sml`: function `IO_bounded_execution`; theorems `IO_bounded_execution_out_of_order_step_sound`, `IO_bounded_execution_in_order_step_sound`
   - `milExecutableIOTraceScript.sml`: function `IO_bounded_trace`; theorems `IO_bounded_trace_out_of_order_step_list_sound`, `IO_bounded_trace_in_order_step_list_sound`
-  - `milBranchEqualScript.sml`: functions `example_beq`, `example_beq_t`, `initialize_example_beq`; theorems `initialize_example_beq_reg_not_1_execution_exists_OoO_trace`, `initialize_example_beq_reg_1_execution_exists_OoO_trace`
-  - `milCopyEqualScript.sml`: functions `example_ceq`, `example_ceq_t`, `initialize_example_ceq`; theorems `initialize_example_ceq_list_1_z_not_1_execution_exists_OoO_trace`, `initialize_example_ceq_list_2_z_not_1_execution_exists_OoO_trace`, `initialize_example_ceq_list_3_z_not_1_execution_exists_OoO_trace`, `initialize_example_ceq_list_4_z_not_1_execution_exists_OoO_trace`, `initialize_example_ceq_list_1_z_1_execution_exists_OoO_trace`
 
 - `cakeml`
 
@@ -170,7 +168,10 @@ make mil_reg_translate.cake
 On a modern machine, compilation can take a few minutes, but running the program should take
 only a few milliseconds to output the following MIL trace:
 ```
-[il 0wx0, il 0wx4, il 0wx0, il 0wx4, il 0wx0, il 0wx4, il 0wx0, il 0wx4, il 0wx0, il 0wx4, il 0wx0, il 0wx4, il 0wx0, il 0wx4, il 0wx0, il 0wx4, il 0wx0, il 0wx4, il 0wx0, il 0wx4, il 0wx0, il 0wx4, il 0wx0, il 0wx4]
+[il 0wx0, il 0wx4, il 0wx0, il 0wx4, il 0wx0, il 0wx4, il 0wx0,
+ il 0wx4, il 0wx0, il 0wx4, il 0wx0, il 0wx4, il 0wx0, il 0wx4,
+ il 0wx0, il 0wx4, il 0wx0, il 0wx4, il 0wx0, il 0wx4, il 0wx0,
+ il 0wx4, il 0wx0, il 0wx4]
 ```
 
 In comparison, the HOL4 `EVAL_TAC` call that proves the equivalent theorem
