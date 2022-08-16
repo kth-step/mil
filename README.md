@@ -1,5 +1,10 @@
 # MIL
 
+[![DOI][doi-badge]][doi-link]
+
+[doi-badge]: https://zenodo.org/badge/DOI/10.5281/zenodo.6997534.svg
+[doi-link]: https://doi.org/10.5281/zenodo.6997534
+
 A formalization of a machine independent language for defining the semantics of microarchitectural features such as out-of-order execution.
 
 ## Building
