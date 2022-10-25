@@ -6,10 +6,10 @@
 [zenodo-doi-badge]: https://zenodo.org/badge/DOI/10.5281/zenodo.6997533.svg
 [zenodo-doi-link]: https://doi.org/10.5281/zenodo.6997533
 
-[fmcad22-doi-badge]: https://zenodo.org/badge/DOI/10.34727/2022/isbn.978-3-85448-053-2_19
+[fmcad22-doi-badge]: https://img.shields.io/badge/DOI-10.34727%2F2022%2Fisbn.978--3--85448--053--2__19-blue
 [fmcad22-doi-link]: https://doi.org/10.34727/2022/isbn.978-3-85448-053-2_19
 
-A formalization of a machine independent language for defining the semantics of microarchitectural features such as out-of-order execution.
+A formalization in [HOL4](https://hol-theorem-prover.org) of a machine independent language for defining the semantics of microarchitectural features such as out-of-order execution.
 
 ## Meta
 
