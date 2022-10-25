@@ -1,11 +1,22 @@
 # MIL
 
-[![DOI][doi-badge]][doi-link]
+[![zenodo-DOI][zenodo-doi-badge]][zenodo-doi-link]
+[![fmcad22-DOI][fmcad22-doi-badge]][fmcad22-doi-link]
 
-[doi-badge]: https://zenodo.org/badge/DOI/10.5281/zenodo.6997534.svg
-[doi-link]: https://doi.org/10.5281/zenodo.6997534
+[zenodo-doi-badge]: https://zenodo.org/badge/DOI/10.5281/zenodo.6997533.svg
+[zenodo-doi-link]: https://doi.org/10.5281/zenodo.6997533
+
+[fmcad22-doi-badge]: https://zenodo.org/badge/DOI/10.34727/2022/isbn.978-3-85448-053-2_19
+[fmcad22-doi-link]: https://doi.org/10.34727/2022/isbn.978-3-85448-053-2_19
 
 A formalization of a machine independent language for defining the semantics of microarchitectural features such as out-of-order execution.
+
+## Meta
+
+- License: [BSD-3-Clause](LICENSE)
+- Related publications:
+  - [Foundations and Tools in HOL4 for Analysis of Microarchitectural Out-of-Order Execution](https://repositum.tuwien.at/handle/20.500.12708/81335) doi:[10.34727/2022/isbn.978-3-85448-053-2_19](https://doi.org/10.34727/2022/isbn.978-3-85448-053-2_19)
+  - [InSpectre: Breaking and Fixing Microarchitectural Vulnerabilities by Formal Analysis](https://arxiv.org/abs/1911.00868) doi:[10.1145/3372297.3417246](https://doi.org/10.1145/3372297.3417246)
 
 ## Building
 
